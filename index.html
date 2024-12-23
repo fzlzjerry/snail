@@ -1,0 +1,229 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <meta name="viewport" content="initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,width=device-width"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style>
+        :root {
+            --apple-blur: saturate(180%) blur(20px);
+            --transition-timing: cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+        }
+        #stageArea {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, #1c1c1e 0%, #000000 100%);
+            perspective: 1000px;
+        }
+        .stage {
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.6s var(--transition-timing);
+            transform-origin: center center;
+            will-change: transform, opacity;
+        }
+        .stage.transitioning {
+            opacity: 0;
+            transform: scale(0.95) translateZ(-100px);
+        }
+        .stage.next {
+            transform: translateX(100%) scale(0.95);
+            opacity: 0;
+        }
+        .stage.prev {
+            transform: translateX(-100%) scale(0.95);
+            opacity: 0;
+        }
+        #slideshowNavigator {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(28, 28, 30, 0.7);
+            padding: 10px 20px;
+            border-radius: 30px;
+            backdrop-filter: var(--apple-blur);
+            -webkit-backdrop-filter: var(--apple-blur);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s var(--transition-timing);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        #slideshowNavigator:hover {
+            background: rgba(44, 44, 46, 0.8);
+            transform: translateX(-50%) scale(1.02);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        #slideshowNavigator button {
+            background: transparent;
+            border: none;
+            color: white;
+            opacity: 0.7;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s var(--transition-timing);
+        }
+        #slideshowNavigator button:hover {
+            opacity: 1;
+            background: rgba(255,255,255,0.1);
+            transform: scale(1.1);
+        }
+        #slideNumberDisplay {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(28, 28, 30, 0.7);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            backdrop-filter: var(--apple-blur);
+            -webkit-backdrop-filter: var(--apple-blur);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s var(--transition-timing);
+        }
+        #slideNumberDisplay:hover {
+            background: rgba(44, 44, 46, 0.8);
+            transform: scale(1.02);
+        }
+        #waitingIndicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+        }
+        #waitingSpinner {
+            width: 32px;
+            height: 32px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        #helpPlacard {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: rgba(28, 28, 30, 0.7);
+            padding: 12px 20px;
+            border-radius: 12px;
+            backdrop-filter: var(--apple-blur);
+            -webkit-backdrop-filter: var(--apple-blur);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 13px;
+            line-height: 1.4;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transform-origin: top right;
+            animation: helpPlacardShow 0.3s var(--transition-timing);
+        }
+        @keyframes helpPlacardShow {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        #hyperlinkPlane {
+            pointer-events: none;
+        }
+        /* 键盘快捷键提示 */
+        .key-hint {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 0 4px;
+        }
+        /* 全局过渡效果 */
+        * {
+            transition: background-color 0.3s var(--transition-timing), 
+                      opacity 0.3s var(--transition-timing),
+                      transform 0.3s var(--transition-timing);
+        }
+    </style>
+</head>
+<body id="body">
+    <div id="stageArea">
+        <div id="stage" class="stage"></div>
+        <div id="hyperlinkPlane" class="stage"></div>
+    </div>
+    <div id="slideshowNavigator">
+        <button id="prevSlide" aria-label="Previous slide">◀</button>
+        <button id="nextSlide" aria-label="Next slide">▶</button>
+    </div>
+    <div id="slideNumberControl"></div>
+    <div id="slideNumberDisplay"></div>
+    <div id="helpPlacard">
+        <div><span class="key-hint">←</span> Previous slide</div>
+        <div><span class="key-hint">→</span> Next slide</div>
+        <div><span class="key-hint">F</span> Fullscreen</div>
+        <div><span class="key-hint">Esc</span> Exit</div>
+    </div>
+    <div id="waitingIndicator">
+        <div id="waitingSpinner"></div>
+    </div>
+    <script src="assets/player/main.js"></script>
+    <script>
+        // 添加幻灯片切换动画类
+        document.addEventListener('DOMContentLoaded', () => {
+            const stage = document.getElementById('stage');
+            
+            // 监听幻灯片切换事件（需要在main.js中触发）
+            document.addEventListener('slideTransition', (e) => {
+                const direction = e.detail.direction; // 'next' 或 'prev'
+                
+                stage.classList.add('transitioning');
+                stage.classList.add(direction);
+                
+                setTimeout(() => {
+                    stage.classList.remove('transitioning');
+                    stage.classList.remove(direction);
+                }, 600);
+            });
+
+            // 显示帮助面板
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'h' || e.key === 'H') {
+                    const helpPlacard = document.getElementById('helpPlacard');
+                    helpPlacard.style.display = helpPlacard.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
